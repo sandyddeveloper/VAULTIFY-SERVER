@@ -1,20 +1,23 @@
-
+from os import getenv, path
 from pathlib import Path
+import dotenv
+from django.core.management.utils import get_random_secret_key
+import os
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+dotenv_file = BASE_DIR/'.env.local'
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
+if path.isfile(dotenv_file):
+    dotenv.load_dotenv(dotenv_file)
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-#7sme^%aj%ycdwoxgo%zra6$!@g$qkjbq6i%#*j^v@q%25t(t+'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", get_random_secret_key())
 
-ALLOWED_HOSTS = []
+DEBUG = getenv('DEBUG', 'False') == 'True'
+
+ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
 
 
 # Application definition
@@ -29,6 +32,8 @@ INSTALLED_APPS = [
     'core',
     'rest_framework',
     'corsheaders',
+    'djoser',
+    'users'
 ]
 
 MIDDLEWARE = [
@@ -105,19 +110,28 @@ USE_I18N = True
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.1/howto/static-files/
+AUTH_USER_MODEL = "users.MyUser";
 
-STATIC_URL = 'static/'
+STATIC_URL = 'static/' 
+STATIC_ROOT = BASE_DIR / 'static'
+MWDIA_URL = 'media'
+MEDIA_ROOT = BASE_DIR / 'media'
 
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
+DJOSER = {
+    'PASSWORD_RESET_CONFIRM_URL': 'password-reset/{uid}/{token}',
+    'SEND_ACTIVATION_EMAIL': True,
+    'ACTIVATION_URL' : 'activation/{uid}/{token}',
+    'USER_CREATE_PASSWORD_RETYPE' : True,
+    'PASSWORD_RESET_CONFIRM_RETYPE' : True,
+    'TOKEN_MODEL' : None,
+}
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 REST_FRAMEWORK = {
-    # Use Django's standard `django.contrib.auth` permissions,
-    # or allow read-only access for unauthenticated users.
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
     ]
